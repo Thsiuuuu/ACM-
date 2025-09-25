@@ -1,0 +1,104 @@
+// 线段树同时支持范围重置、范围增加、范围查询
+// 维护累加和
+#include <vector>
+#include <iostream>
+#include <algorithm>
+
+using namespace std;
+
+#define int long long 
+
+const int maxn=1e6+10;
+
+int arr[maxn],sum[maxn<<2],add[maxn<<2],change[maxn<<2],update[maxn<<2];
+
+
+void up(int i){
+    sum[i]=sum[i<<1]+sum[i<<1|1];
+}
+
+void updatelazy(int i,int v,int n){
+    sum[i]=n*v;
+    add[i]=0;
+    change[i]=v;
+    update[i]=true;
+}
+
+void addlazy(int i,int v,int n){
+    sum[i]+=v*n;
+    add[i]+=v;
+}
+
+void down(int i,int ln,int rn){
+    if(update[i]){
+        updatelazy(i<<1,change[i],ln);
+        updatelazy(i<<1|1,change[i],rn);
+        update[i]=false;
+    }
+    if(add[i]!=0){
+        addlazy(i<<1,add[i],ln);
+        addlazy(i<<1|1,add[i],rn);
+        add[i]=0;
+    }
+}
+
+void build(int l,int r,int i){
+    if(l==r) sum[i]=arr[l];
+    else{
+        int mid=(l+r)>>1;
+        build(1,mid,i<<1);
+        build(mid+1,r,i<<1|1);
+        up(i);
+    }
+    add[i]=0;
+    change[i]=0;
+    update[i]=false;
+}
+
+void upd(int jobl,int jobr,int jobv,int l,int r,int i){
+    if(jobl<=l&&r<=jobr) updatelazy(i,jobv,r-l+1);
+    else{
+        int mid=(l+r)>>1;
+        down(i,mid-l+1,r-mid);
+        if(jobl<=mid){
+            upd(jobl,jobr,jobv,l,mid,i<<1);
+        }
+        if(jobr>mid){
+            upd(jobl,jobr,jobv,mid+1,r,i<<1|1);
+        }
+        up(i);
+    }
+}
+
+void adg(int jobl,int jobr,int jobv,int l,int r,int i){
+    if(jobl<=l&&r<=jobr) addlazy(i,jobv,r-l+1);
+    else{
+        int mid=(l+r)>>1;
+        down(i,mid-l+1,r-mid);
+        if(jobl<=mid){
+            adg(jobl,jobr,jobv,l,mid,i<<1);
+        }
+        if(jor>mid){
+            adg(jobl,jobr,jobv,mid+1,r,i<<1|1);
+        }
+        up(i);
+    }
+}
+
+
+int query(int jobl,int jobr,int l,int r,int i){
+    if(jobl<=l&&r<=jobr){
+        return sum[i];
+    }
+    int mid=(l+r)>>1;
+    down(i,mid-l+1,r-mid);
+    int ans=0;
+    if(jobl<=mid){
+        ans+=query(jobl,jobr,l,mid,i<<1);
+    }
+    if(jobr>mid){
+        ans+=query(jobl,jobr,mid+1,r,i<<1|1);
+    }
+    return ans;
+}
+
